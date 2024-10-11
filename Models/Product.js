@@ -17,9 +17,9 @@ const ProductSchema = new Schema({
     default: [],
   },
   category: {
-    type: Schema.Types.ObjectId,
-    required: true,
+    type: String,
     ref: "Category",
+    default: 'Basic',
   },
   price: {
     type: Number,

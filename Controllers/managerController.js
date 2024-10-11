@@ -164,10 +164,11 @@ const managerController = {
         console.log("body", req.body);
         console.log("file", req.file);
 
-        const { name, description, price, category } = req.body;
+        const { name, description, price } = req.body;
+        const category = "Basic";
         const image = req.file;
 
-        if (!name || !description || !price || !category) {
+        if (!name || !description || !price) {
           return res.status(400).json({ message: "Please fill in all fields" });
         }
 
@@ -194,13 +195,13 @@ const managerController = {
           return res.status(400).json({ message: "Product already exists" });
         }
 
-        const cat = await Category.findOne({
-          shop_id: shopId,
-          category_name: category,
-        });
-        if (!cat) {
-          return res.status(404).json({ message: "Category not found" });
-        }
+        // const cat = await Category.findOne({
+        //   shop_id: shopId,
+        //   category_name: category,
+        // });
+        // if (!cat) {
+        //   return res.status(404).json({ message: "Category not found" });
+        // }
 
         const product = new Product({
           shop_id: shopId,
@@ -208,7 +209,7 @@ const managerController = {
           description,
           image: `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/products%2F${uuid}?alt=media&token=${uuid}`,
           price,
-          category: cat._id,
+          category: "Basic",
         });
         await product.save();
 
@@ -230,11 +231,7 @@ const managerController = {
       const products = await Product.find({
         shop_id: shopId,
         status: true,
-      }).populate({
-        path: "category",
-        select: "category_name",
       });
-
       res.status(200).json({ products });
     } catch (error) {
       console.log(error);
