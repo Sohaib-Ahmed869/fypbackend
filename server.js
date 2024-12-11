@@ -28,7 +28,9 @@ try {
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb+srv://hexlertech:ht_70707070@nimbuscluster.ud3bqgb.mongodb.net/?retryWrites=true&w=majority&appName=NimbusCluster")
+  .connect(
+    "mongodb://127.0.0.1:27017/nimbus360fyp"
+  )
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
@@ -49,27 +51,22 @@ app.get("/", (req, res) => {
 
 // Routes
 const authRoutes = require("./Routes/authRoutes");
-const adminRoutes = require("./Routes/adminRoutes");
+const adminRoutes = require("./Routes/AdminRoutes/adminRoutes");
 const managerRoutes = require("./Routes/managerRoutes");
 const cashierRoutes = require("./Routes/cashierRoutes");
+const CategoryRoutes = require("./Routes/AdminRoutes/categoryRoutes");
+const WeatherRoutes = require("./Routes/weatherRoutes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/manager", managerRoutes);
 app.use("/cashier", cashierRoutes);
+app.use("/category", CategoryRoutes);
+app.use("/weather", WeatherRoutes);
 
-// // SSL options
-// const options = {
-//   key: fs.readFileSync('/etc/letsencrypt/live/nimbus360.org/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/nimbus360.org/fullchain.pem')
-// };
+
 
 const PORT = process.env.PORT || 3001;
-
-// // Create HTTPS server
-// https.createServer(options, app).listen(PORT, () => {
-//   console.log(`HTTPS Server is running on port ${PORT}`);
-// });
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -19,7 +19,7 @@ const ProductSchema = new Schema({
   category: {
     type: String,
     ref: "Category",
-    default: 'Basic',
+    default: "Basic",
   },
   price: {
     type: Number,
@@ -34,6 +34,16 @@ const ProductSchema = new Schema({
     required: true,
     index: true,
   },
+  ingredients: [{
+    ingredient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ingredient'
+    },
+    quantity: {
+      type: Number,
+      required: true
+    }
+  }]
 });
 
 ProductSchema.index({ shop_id: 1, name: 1 }, { unique: true });

@@ -59,6 +59,14 @@ const ShopSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  paid: {
+    type: Boolean,
+    default: false,
+  },
+  type: {
+    type: String,
+    default: "Not selected",
+  },
 });
 
 ShopSchema.pre("save", async function (next) {

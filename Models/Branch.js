@@ -73,6 +73,17 @@ const BranchSchema = new Schema({
     type: Number,
     default: 0,
   },
+  coordinate_x: {
+    type: Number,
+    default: 0,
+  },
+  coordinate_y: {
+    type: Number,
+    default: 0,
+  },
+  warehouse_id: {
+    type: Schema.Types.ObjectId,
+  },
 });
 
 BranchSchema.index({ shop_id: 1, branch_name: 1 }, { unique: true });

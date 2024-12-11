@@ -7,26 +7,26 @@ const IngredientSchema = new Schema({
     required: true,
     unique: true,
   },
-  ingredient_description: {
-    type: String,
-    required: true,
-  },
-  ingredient_status: {
-    type: Boolean,
-    default: true,
-  },
   shop_id: {
     type: Schema.Types.ObjectId,
-    unique: true,
     required: true,
-  },
-  category: {
-    type: Schema.Types.ObjectId,
-    required: true,
+    index: true,
   },
   price: {
     type: Number,
     required: true,
+  },
+  unit:{
+    type: String,
+    required:true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+  },
+  demand: {
+    type: Boolean,
+    default: false,
   },
 });
 

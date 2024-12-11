@@ -83,6 +83,9 @@ const OrderSchema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
   },
+  feedback: {
+    type: String,
+  },
 });
 
 const Order = mongoose.model("Order", OrderSchema);

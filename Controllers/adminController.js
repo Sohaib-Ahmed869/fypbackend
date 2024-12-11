@@ -5,6 +5,7 @@ const Category = require("../Models/Category");
 const Order = require("../Models/Order");
 const Product = require("../Models/Product");
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 const adminController = {
   getShop: async (req, res) => {
@@ -133,6 +134,8 @@ const adminController = {
         closing_time,
         card_tax,
         cash_tax,
+        coordinate_x,
+        coordinate_y,
       } = req.body;
 
       if (!branchName || !address || !city || !contact) {
@@ -156,6 +159,8 @@ const adminController = {
         closing_time,
         card_tax,
         cash_tax,
+        coordinate_x,
+        coordinate_y,
       });
 
       await branch.save();
@@ -418,6 +423,60 @@ const adminController = {
       res.status(200).json(branchSales);
     } catch (error) {
       console.log(error);
+      res.status(500).json({ message: error.message });
+    }
+  },
+  getFeedbackAnalysis: async (req, res) => {
+    try {
+      const shopId = req.shopId;
+      if (!shopId) {
+        return res.status(400).json({ message: "Please provide shop name" });
+      }
+
+      // Get all orders with feedback
+      const orders = await Order.find({
+        shop_id: shopId,
+        feedback: { $exists: true, $ne: null }, // Only get orders with feedback
+      }).select("feedback customer_name time branch_id");
+
+      if (!orders || orders.length === 0) {
+        return res.status(404).json({ message: "No feedback found" });
+      }
+
+      // Extract just the feedback texts
+      const feedbacks = orders.map((order) => order.feedback);
+
+      try {
+        // Send to Flask server for analysis
+        const analysisResponse = await axios.post(
+          "http://127.0.0.1:5001/analyze-feedback",
+          {
+            reviews: feedbacks,
+          }
+        );
+
+        // Combine the analysis with order details
+        const enrichedAnalysis = {
+          raw_data: orders.map((order) => ({
+            feedback: order.feedback,
+            customer_name: order.customer_name,
+            time: order.time,
+            branch_id: order.branch_id,
+          })),
+          analysis: analysisResponse.data.analysis,
+        };
+
+        console.log("Enriched analysis:", enrichedAnalysis.analysis.keyword_analysis.top_keywords);
+        res.status(200).json(enrichedAnalysis);
+      } catch (flaskError) {
+        console.error("Error from Flask server:", flaskError);
+        res.status(503).json({
+          message: "Feedback analysis service unavailable",
+          error: flaskError.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error in getFeedbackAnalysis:", error);
       res.status(500).json({ message: error.message });
     }
   },

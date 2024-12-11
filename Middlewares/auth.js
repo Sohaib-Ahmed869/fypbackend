@@ -46,6 +46,12 @@ const authMiddlewares = {
       return res.status(403).send({ message: "Require Manager Role!" });
     next();
   },
+  verifyManagement: (req, res, next) => {
+    if (req.role !== "manager" && req.role !== "admin") {
+      return res.status(403).send({ message: "Require Administrative Role!" });
+    }
+    next();
+  },
 };
 
 module.exports = authMiddlewares;

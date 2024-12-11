@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mw = require("../Middlewares/auth");
 const managerController = require("../Controllers/managerController");
+const ingredientController = require("../Controllers/ingredientController");
 
 router.get("/", mw.verifyToken, mw.verifyManager, managerController.getBranch);
 router.get(
@@ -74,6 +75,28 @@ router.put(
   mw.verifyToken,
   mw.verifyManager,
   managerController.updateCashOnHand
+);
+
+// Ingredient routes
+router.post(
+  "/ingredient/add",
+  mw.verifyToken,
+  mw.verifyManager,
+  ingredientController.addIngredient
+);
+
+router.get(
+  "/ingredients",
+  mw.verifyToken,
+  mw.verifyManager,
+  ingredientController.getAllIngredientsByShop
+);
+
+router.put(
+  "/product/inactiveProduct/:productId",
+  mw.verifyToken,
+  mw.verifyManager,
+  managerController.inactivateProduct
 );
 
 module.exports = router;

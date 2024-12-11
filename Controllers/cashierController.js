@@ -154,7 +154,6 @@ const cashierController = {
       if (!branch) {
         return res.status(404).send({ message: "Branch not found" });
       }
-      
 
       // add grand total to branch sales
       branch.sales.push({ date: new Date(), amount: grand_total });
@@ -172,6 +171,10 @@ const cashierController = {
   completeOrder: async (req, res) => {
     try {
       const orderId = req.params.id;
+      let { feedback } = req.body;
+      if (!feedback) {
+        feedback = "";
+      }
       if (!orderId) {
         return res.status(400).send({ message: "Please provide order id" });
       }
@@ -182,6 +185,7 @@ const cashierController = {
       }
 
       order.status = "completed";
+      order.feedback = feedback;
       await order.save();
 
       res.status(200).send({ message: "Order completed successfully" });

@@ -62,11 +62,18 @@ const authController = {
 
   addShop: async (req, res) => {
     try {
-      const { shopName, email, password } = req.body;
+      const { shopName, email, password, website_link, NTN, type } = req.body;
       if (!shopName || !email || !password) {
         return res.status(400).json({ message: "Please fill in all fields" });
       }
-      const shop = new Shop({ shop_name: shopName, email, password });
+      const shop = new Shop({
+        shop_name: shopName,
+        email,
+        password,
+        website_link,
+        NTN,
+        type,
+      });
 
       await shop.save();
 

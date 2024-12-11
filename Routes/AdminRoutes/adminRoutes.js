@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const mw = require("../Middlewares/auth");
-const adminController = require("../Controllers/adminController");
+const mw = require("../../Middlewares/auth");
+const adminController = require("../../Controllers/adminController");
 
 router.get("/", mw.verifyToken, mw.verifyAdmin, adminController.getShop);
 router.get(
@@ -86,6 +86,13 @@ router.delete(
   mw.verifyToken,
   mw.verifyAdmin,
   adminController.deleteBranch
+);
+
+router.get(
+  "/feedbackAnalysis",
+  mw.verifyToken,
+  mw.verifyAdmin,
+  adminController.getFeedbackAnalysis
 );
 
 module.exports = router;

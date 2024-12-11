@@ -165,11 +165,18 @@ const managerController = {
         console.log("file", req.file);
 
         const { name, description, price } = req.body;
+        const ingredients = JSON.parse(req.body.ingredients); // Parse the JSON string
         const category = "Basic";
         const image = req.file;
 
         if (!name || !description || !price) {
           return res.status(400).json({ message: "Please fill in all fields" });
+        }
+
+        if (!ingredients || ingredients.length === 0) {
+          return res
+            .status(400)
+            .json({ message: "Please provide ingredients" });
         }
 
         if (!image) {
@@ -195,14 +202,6 @@ const managerController = {
           return res.status(400).json({ message: "Product already exists" });
         }
 
-        // const cat = await Category.findOne({
-        //   shop_id: shopId,
-        //   category_name: category,
-        // });
-        // if (!cat) {
-        //   return res.status(404).json({ message: "Category not found" });
-        // }
-
         const product = new Product({
           shop_id: shopId,
           name,
@@ -210,7 +209,12 @@ const managerController = {
           image: `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/products%2F${uuid}?alt=media&token=${uuid}`,
           price,
           category: "Basic",
+          ingredients: ingredients.map((ing) => ({
+            ingredient: ing.ingredient,
+            quantity: ing.quantity,
+          })),
         });
+
         await product.save();
 
         res.status(201).json({ message: "Product created successfully" });
@@ -230,9 +234,41 @@ const managerController = {
 
       const products = await Product.find({
         shop_id: shopId,
-        status: true,
+      }).populate({
+        path: "ingredients.ingredient",
+        model: "Ingredient",
+        select: "ingredient_name price quantity", // specify the fields you want to get from Ingredient model
       });
+
       res.status(200).json({ products });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  inactivateProduct: async (req, res) => {
+    try {
+      console.log(req.params);
+      const { productId } = req.params;
+      const shopId = req.shopId;
+
+      console.log("productId", productId);
+      console.log("shopId", shopId);
+
+      const product = await Product.findOne({
+        _id: productId,
+        shop_id: shopId,
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      product.status = !product.status;
+      await product.save();
+
+      res.status(200).json({ message: "Product inactivated successfully 2" });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: error.message });
