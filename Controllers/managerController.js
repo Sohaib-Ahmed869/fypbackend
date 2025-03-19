@@ -164,9 +164,9 @@ const managerController = {
         console.log("body", req.body);
         console.log("file", req.file);
 
-        const { name, description, price } = req.body;
+        const { name, description, price, category } = req.body;
         const ingredients = JSON.parse(req.body.ingredients); // Parse the JSON string
-        const category = "Basic";
+
         const image = req.file;
 
         if (!name || !description || !price) {

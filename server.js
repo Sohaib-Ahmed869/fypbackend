@@ -56,6 +56,7 @@ const managerRoutes = require("./Routes/managerRoutes");
 const cashierRoutes = require("./Routes/cashierRoutes");
 const CategoryRoutes = require("./Routes/AdminRoutes/categoryRoutes");
 const WeatherRoutes = require("./Routes/weatherRoutes");
+const InventoryRoutes = require("./Routes/inventoryRoutes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
@@ -63,6 +64,7 @@ app.use("/manager", managerRoutes);
 app.use("/cashier", cashierRoutes);
 app.use("/category", CategoryRoutes);
 app.use("/weather", WeatherRoutes);
+app.use("/inventory", InventoryRoutes);
 
 
 

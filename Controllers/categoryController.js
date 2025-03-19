@@ -14,16 +14,16 @@ const CategoryController = {
       if (!shop) {
         return res.status(404).send({ message: "Shop not found" });
       }
-      const { category_name, status } = req.body;
+      const { category_name, description } = req.body;
 
-      if (!category_name || !status) {
+      if (!category_name) {
         return res.status(400).send({ message: "Please fill in all fields" });
       }
 
       const category = new Category({
         category_name,
         shop_id: shopId,
-        status,
+        description,
       });
 
       await category.save();
@@ -85,7 +85,8 @@ const CategoryController = {
   },
   getAllCategoriesByShop: async (req, res) => {
     try {
-      const { shopId } = req.body; // Assumes the shop ID is provided via middleware or request
+      const { shopId } = req;
+      console.log(shopId);
       if (!shopId) {
         return res.status(400).send({ message: "Please provide a shop ID" });
       }
@@ -98,9 +99,7 @@ const CategoryController = {
       const categories = await Category.find({ shop_id: shopId });
 
       if (!categories.length) {
-        return res
-          .status(404)
-          .send({ message: "No categories found for this shop" });
+        return res.status(200).send({ categories });
       }
 
       return res.status(200).send({

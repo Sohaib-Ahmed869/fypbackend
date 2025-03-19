@@ -21,6 +21,11 @@ router.put(
   mw.verifyAdmin,
   CategoryController.toggleCategoryStatus
 );
-router.get("/", CategoryController.getAllCategoriesByShop);
+router.get(
+  "/",
+  mw.verifyToken,
+  mw.verifyAdmin,
+  CategoryController.getAllCategoriesByShop
+);
 
 module.exports = router;

@@ -7,14 +7,17 @@ const CategorySchema = new Schema({
     required: true,
     unique: true,
   },
-  status: {
-    type: Boolean,
-    default: true,
+  description: {
+    type: String,
   },
   shop_id: {
     type: Schema.Types.ObjectId,
     required: true,
     index: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
