@@ -1,13 +1,17 @@
+// server.js - updated version with socket integration
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const express = require("express");
 const dotenv = require("dotenv");
 const https = require("https");
+const http = require("http");
 const cors = require("cors");
 const fs = require("fs");
 const app = express();
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceaccount.json");
+const socketIo = require("socket.io");
+const SocketService = require("./services/socketService");
 
 app.use(cookieParser());
 app.use(express.json());
@@ -28,9 +32,7 @@ try {
 
 // Connect to MongoDB
 mongoose
-  .connect(
-    "mongodb://127.0.0.1:27017/nimbus360fyp"
-  )
+  .connect("mongodb://127.0.0.1:27017/nimbus360fyp")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
@@ -49,27 +51,46 @@ app.get("/", (req, res) => {
   res.send("Welcome to the Warehouse Management System API");
 });
 
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = socketIo(server, {
+  cors: {
+    origin: ["http://localhost:3000", "https://nimbus360.org"],
+    credentials: true,
+  },
+});
+
+// Initialize Socket Service
+const socketService = new SocketService(io);
+
+// Make socketService available to routes
+app.set("socketService", socketService);
+
 // Routes
 const authRoutes = require("./Routes/authRoutes");
 const adminRoutes = require("./Routes/AdminRoutes/adminRoutes");
 const managerRoutes = require("./Routes/managerRoutes");
 const cashierRoutes = require("./Routes/cashierRoutes");
-const CategoryRoutes = require("./Routes/AdminRoutes/categoryRoutes");
-const WeatherRoutes = require("./Routes/weatherRoutes");
-const InventoryRoutes = require("./Routes/inventoryRoutes");
+const categoryRoutes = require("./Routes/AdminRoutes/categoryRoutes");
+const weatherRoutes = require("./Routes/weatherRoutes");
+const inventoryRoutes = require("./Routes/inventoryRoutes");
+const messageRoutes = require("./Routes/messageRoutes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/manager", managerRoutes);
 app.use("/cashier", cashierRoutes);
-app.use("/category", CategoryRoutes);
-app.use("/weather", WeatherRoutes);
-app.use("/inventory", InventoryRoutes);
-
-
+app.use("/category", categoryRoutes);
+app.use("/weather", weatherRoutes);
+app.use("/inventory", inventoryRoutes);
+app.use("/messages", messageRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Use server.listen instead of app.listen
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT} with Socket.IO enabled`);
 });
+  
