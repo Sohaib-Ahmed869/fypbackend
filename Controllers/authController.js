@@ -112,7 +112,13 @@ const authController = {
           sameSite: "none",
           secure: true,
         })
-        .json({ role: role, shopName: shopName });
+        .json({
+          role: role,
+          shopName: shopName,
+          // Add these fields:
+          userId: shop._id,
+          shopId: shop._id,
+        });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: error.message });
@@ -173,7 +179,14 @@ const authController = {
           sameSite: "none",
           secure: true,
         })
-        .json({ role: role, shopName, branchName });
+        .json({
+          role: role,
+          shopName,
+          branchName,
+          userId: manager._id,
+          shopId: shop._id,
+          branchId: branch._id,
+        });
 
       console.log("Manager login successful");
     } catch (error) {
@@ -238,7 +251,14 @@ const authController = {
           sameSite: "none",
           secure: true,
         })
-        .json({ role: role, shopName, branchName });
+        .json({
+          role: role,
+          shopName,
+          branchName,
+          userId: cashier._id,
+          shopId: shop._id,
+          branchId: branch._id,
+        });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: error.message });

@@ -25,7 +25,7 @@ router.delete("/:messageId", mw.verifyToken, messageController.deleteMessage);
 
 // Get conversation with specific user
 router.get(
-  "/conversation/:otherUserRole/:otherUserId",
+  "/conversation/:otherUserId/:otherUserRole",
   mw.verifyToken,
   messageController.getConversation
 );

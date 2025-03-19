@@ -10,7 +10,10 @@ const messageController = {
   // Send a message
   sendMessage: async (req, res) => {
     try {
-      const { recipient, recipientId, content, priority } = req.body;
+      const { content, priority } = req.body;
+      const recipientId = req.body.to.id;
+      const recipient = req.body.to.role;
+      console.log( content, priority);
       const { shopId, branchId, id: senderId, role: senderRole } = req;
 
       if (!recipient || !recipientId || !content) {
@@ -88,6 +91,7 @@ const messageController = {
   getMessages: async (req, res) => {
     try {
       const { id, role, shopId, branchId } = req;
+      console.log(req.query);
       const { status, limit = 50, skip = 0 } = req.query;
 
       // Build query based on user role and optional status filter
@@ -236,6 +240,7 @@ const messageController = {
   getConversation: async (req, res) => {
     try {
       const { otherUserId, otherUserRole } = req.params;
+      console.log(req.params);
       const { id, role, shopId } = req;
       const { limit = 50, skip = 0 } = req.query;
 
