@@ -6,7 +6,84 @@ const Order = require("../Models/Order");
 const Product = require("../Models/Product");
 const mongoose = require("mongoose");
 const axios = require("axios");
+// Helper function for basic sentiment analysis when the API is unavailable
+function getBasicSentiment(text) {
+  if (!text) return { label: "NEUTRAL", score: 0.5 };
 
+  const text_lower = text.toLowerCase();
+
+  // Simple positive and negative word lists
+  const positiveWords = [
+    "good",
+    "great",
+    "excellent",
+    "amazing",
+    "love",
+    "delicious",
+    "tasty",
+    "perfect",
+    "awesome",
+    "recommend",
+    "best",
+    "friendly",
+    "helpful",
+    "clean",
+    "enjoy",
+    "enjoyed",
+    "fresh",
+    "quality",
+    "attentive",
+    "wonderful",
+    "fantastic",
+    "happy",
+    "pleased",
+  ];
+
+  const negativeWords = [
+    "bad",
+    "poor",
+    "terrible",
+    "awful",
+    "worst",
+    "disappoint",
+    "disappointed",
+    "slow",
+    "rude",
+    "cold",
+    "wait",
+    "wrong",
+    "dirty",
+    "stale",
+    "overpriced",
+    "expensive",
+    "mediocre",
+    "unhappy",
+    "unpleasant",
+    "horrible",
+    "bland",
+    "disgusting",
+  ];
+
+  // Count positive and negative words
+  const positiveCount = positiveWords.reduce((count, word) => {
+    return count + (text_lower.includes(word) ? 1 : 0);
+  }, 0);
+
+  const negativeCount = negativeWords.reduce((count, word) => {
+    return count + (text_lower.includes(word) ? 1 : 0);
+  }, 0);
+
+  // Determine sentiment based on word counts
+  if (positiveCount > negativeCount) {
+    const score = Math.min(0.9, 0.5 + (positiveCount - negativeCount) * 0.1);
+    return { label: "POSITIVE", score };
+  } else if (negativeCount > positiveCount) {
+    const score = Math.min(0.9, 0.5 + (negativeCount - positiveCount) * 0.1);
+    return { label: "NEGATIVE", score };
+  } else {
+    return { label: "NEUTRAL", score: 0.5 };
+  }
+}
 const adminController = {
   getShop: async (req, res) => {
     try {
@@ -437,14 +514,26 @@ const adminController = {
       const orders = await Order.find({
         shop_id: shopId,
         feedback: { $exists: true, $ne: null }, // Only get orders with feedback
-      }).select("feedback customer_name time branch_id");
+      }).select(
+        "feedback customer_name time branch_id order_type payment_method grand_total"
+      );
 
       if (!orders || orders.length === 0) {
         return res.status(404).json({ message: "No feedback found" });
       }
 
-      // Extract just the feedback texts
+      // Extract feedback texts
       const feedbacks = orders.map((order) => order.feedback);
+
+      // Create metadata for temporal analysis
+      const metadata = orders.map((order) => ({
+        time: order.time,
+        customer_name: order.customer_name,
+        branch_id: order.branch_id?.toString(),
+        order_type: order.order_type,
+        payment_method: order.payment_method,
+        grand_total: order.grand_total,
+      }));
 
       try {
         // Send to Flask server for analysis
@@ -452,8 +541,18 @@ const adminController = {
           "http://127.0.0.1:5001/analyze-feedback",
           {
             reviews: feedbacks,
+            metadata: metadata,
+            format_for_dashboard: true,
+          },
+          {
+            timeout: 30000, // 30 second timeout
           }
         );
+
+        // Check if we received a valid response
+        if (!analysisResponse.data || !analysisResponse.data.analysis) {
+          throw new Error("Invalid response from feedback analysis service");
+        }
 
         // Combine the analysis with order details
         const enrichedAnalysis = {
@@ -462,21 +561,140 @@ const adminController = {
             customer_name: order.customer_name,
             time: order.time,
             branch_id: order.branch_id,
+            order_type: order.order_type,
+            payment_method: order.payment_method,
+            grand_total: order.grand_total,
           })),
           analysis: analysisResponse.data.analysis,
+          dashboard_data: analysisResponse.data.dashboard_data || null,
         };
 
-        console.log("Enriched analysis:", enrichedAnalysis.analysis.keyword_analysis.top_keywords);
+        // Log important keywords for debugging
+        if (
+          enrichedAnalysis.analysis.keyword_analysis &&
+          enrichedAnalysis.analysis.keyword_analysis.top_keywords
+        ) {
+          console.log(
+            "Top keywords:",
+            Object.keys(
+              enrichedAnalysis.analysis.keyword_analysis.top_keywords
+            ).slice(0, 5)
+          );
+        }
+
         res.status(200).json(enrichedAnalysis);
       } catch (flaskError) {
-        console.error("Error from Flask server:", flaskError);
+        console.error("Error from Flask server:", flaskError.message);
+
+        // If there's a specific error from the service
+        if (flaskError.response && flaskError.response.data) {
+          console.error("Service error details:", flaskError.response.data);
+        }
+
+        // Provide helpful error information to the client
         res.status(503).json({
           message: "Feedback analysis service unavailable",
           error: flaskError.message,
+          suggestion:
+            "Please ensure the feedback analysis service is running at http://127.0.0.1:5001",
         });
       }
     } catch (error) {
       console.error("Error in getFeedbackAnalysis:", error);
+      res.status(500).json({ message: error.message });
+    }
+  },
+  getSuggestionsByFeedback: async (req, res) => {
+    try {
+      const shopId = req.shopId;
+      if (!shopId) {
+        return res.status(400).json({ message: "Please provide shop name" });
+      }
+
+      const { feedback } = req.body;
+      if (!feedback) {
+        return res
+          .status(400)
+          .json({ message: "Please provide feedback text" });
+      }
+
+      try {
+        // Send to Flask server for suggestions
+        const response = await axios.post(
+          "http://127.0.0.1:5001/suggest-improvements",
+          {
+            reviews: [feedback],
+          },
+          {
+            timeout: 10000, // 10 second timeout
+          }
+        );
+
+        // Return the suggestions from the analysis service
+        res.status(200).json(response.data);
+      } catch (flaskError) {
+        console.error(
+          "Error from Flask suggestion service:",
+          flaskError.message
+        );
+
+        res.status(503).json({
+          message: "Feedback suggestion service unavailable",
+          error: flaskError.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error in getSuggestionsByFeedback:", error);
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  getQuickSentimentAnalysis: async (req, res) => {
+    try {
+      const shopId = req.shopId;
+      if (!shopId) {
+        return res.status(400).json({ message: "Please provide shop name" });
+      }
+
+      const { text } = req.body;
+      console.log("Text:", text); 
+      if (!text) {
+        return res
+          .status(400)
+          .json({ message: "Please provide text for sentiment analysis" });
+      }
+
+      try {
+        // Send to Flask server for sentiment analysis
+        const response = await axios.post(
+          "http://127.0.0.1:5001/sentiment",
+          {
+            text: text,
+          },
+          {
+            timeout: 5000, // 5 second timeout
+          }
+        );
+
+        // Return the sentiment analysis
+        res.status(200).json(response.data);
+      } catch (flaskError) {
+        console.error(
+          "Error from sentiment analysis service:",
+          flaskError.message
+        );
+
+        // Fallback to basic sentiment analysis
+        const basicSentiment = getBasicSentiment(text);
+
+        res.status(200).json({
+          message:
+            "Using fallback sentiment analysis due to service unavailability",
+          sentiment: basicSentiment,
+        });
+      }
+    } catch (error) {
+      console.error("Error in getQuickSentimentAnalysis:", error);
       res.status(500).json({ message: error.message });
     }
   },

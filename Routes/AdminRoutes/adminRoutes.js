@@ -95,4 +95,20 @@ router.get(
   adminController.getFeedbackAnalysis
 );
 
+router.post(
+  "/suggestions",
+  mw.verifyToken,
+  mw.verifyAdmin,
+  adminController.getSuggestionsByFeedback
+);
+
+
+router.post(
+  "/quickSentimentAnalysis",
+  mw.verifyToken,
+  mw.verifyAdmin,
+  adminController.getQuickSentimentAnalysis
+);
+
+
 module.exports = router;

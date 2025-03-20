@@ -77,6 +77,7 @@ const categoryRoutes = require("./Routes/AdminRoutes/categoryRoutes");
 const weatherRoutes = require("./Routes/weatherRoutes");
 const inventoryRoutes = require("./Routes/inventoryRoutes");
 const messageRoutes = require("./Routes/messageRoutes");
+const predictiveRoutes = require("./Routes/predictiveRoutes");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
@@ -86,6 +87,7 @@ app.use("/category", categoryRoutes);
 app.use("/weather", weatherRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/messages", messageRoutes);
+app.use("/analytics", predictiveRoutes);
 
 const PORT = process.env.PORT || 3001;
 
