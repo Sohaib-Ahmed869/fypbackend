@@ -14,3 +14,4 @@ router.post("/cashier/login", authController.cashierLogin);
 router.post("/logout", authController.logout);
 
 module.exports = router;
+  

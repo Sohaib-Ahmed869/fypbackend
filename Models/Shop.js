@@ -67,6 +67,9 @@ const ShopSchema = new Schema({
     type: String,
     default: "Not selected",
   },
+  subscription_id: {
+    type: String,
+  },
 });
 
 ShopSchema.pre("save", async function (next) {

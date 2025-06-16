@@ -1,65 +1,14 @@
+// Controllers/authController.js
 const express = require("express");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-// const Admin = require("../Models/Admin");
 const Shop = require("../Models/Shop");
 const Branch = require("../Models/Branch");
 const Manager = require("../Models/Manager");
 const Cashier = require("../Models/Cashier");
+const stripeService = require("../services/stripeService");
 
 const authController = {
-  /*
-  signup: async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ message: "Please fill in all fields" });
-      }
-      const admin = new Admin({ username, email, password });
-      await admin.save();
-
-      res.status(201).json({ message: "Admin created successfully" });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: error.message });
-    }
-  },
-
-  login: async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ message: "Please fill in all fields" });
-      }
-      const admin = await Admin.findOne({ username });
-      if (!admin) {
-        return res.status(400).json({ message: "Invalid credentials" });
-      }
-      const isMatch = await admin.comparePassword(password);
-      if (!isMatch) {
-        return res.status(400).json({ message: "Invalid credentials" });
-      }
-      role = "superadmin";
-      const token = jwt.sign(
-        { id: admin._id, role: role },
-        process.env.JWT_SECRET
-      );
-  
-      res
-        .status(200)
-        .cookie("token", token, {
-          httpOnly: true,
-          sameSite: "none",
-          secure: true,
-        })
-        .json({ role: role });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: error.message });
-    }
-  },
-  */
-
   addShop: async (req, res) => {
     try {
       const { shopName, email, password, website_link, NTN, type } = req.body;
@@ -73,11 +22,18 @@ const authController = {
         website_link,
         NTN,
         type,
+        paid: false, // Initialize as unpaid
+        bill_status: false, // Initialize with unpaid bill status
+        subscription_plan: null,
+        subscription_id: null,
       });
 
       await shop.save();
 
-      res.status(201).json({ message: "Shop created successfully" });
+      res.status(201).json({
+        message: "Shop created successfully",
+        shopId: shop._id,
+      });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: error.message });
@@ -98,12 +54,19 @@ const authController = {
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
+
       const role = "admin";
       const token = jwt.sign(
         { id: shop._id, role: role, shopId: shop._id, shopName: shopName },
         process.env.JWT_SECRET,
         { expiresIn: "12h" }
       );
+
+      // Check subscription status in Stripe (this updates the DB if needed)
+      await stripeService.checkSubscriptionStatus(shop._id);
+
+      // Refresh shop data after potential update
+      const updatedShop = await Shop.findById(shop._id);
 
       res
         .status(200)
@@ -115,9 +78,9 @@ const authController = {
         .json({
           role: role,
           shopName: shopName,
-          // Add these fields:
-          userId: shop._id,
-          shopId: shop._id,
+          userId: updatedShop._id,
+          shopId: updatedShop._id,
+          paymentRequired: !updatedShop.paid || !updatedShop.bill_status,
         });
     } catch (error) {
       console.log(error);
@@ -135,6 +98,14 @@ const authController = {
       const shop = await Shop.findOne({ shop_name: shopName });
       if (!shop) {
         return res.status(404).json({ message: "Shop not found" });
+      }
+
+      // Check if subscription is active before allowing login
+      if (!shop.paid || !shop.bill_status) {
+        return res.status(403).json({
+          message:
+            "Shop subscription is inactive. Please contact the admin to renew the subscription.",
+        });
       }
 
       const branch = await Branch.findOne({
@@ -207,6 +178,14 @@ const authController = {
       const shop = await Shop.findOne({ shop_name: shopName });
       if (!shop) {
         return res.status(404).json({ message: "Shop not found" });
+      }
+
+      // Check if subscription is active before allowing login
+      if (!shop.paid || !shop.bill_status) {
+        return res.status(403).json({
+          message:
+            "Shop subscription is inactive. Please contact the admin to renew the subscription.",
+        });
       }
 
       const branch = await Branch.findOne({

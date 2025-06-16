@@ -19,7 +19,7 @@ const predictiveController = {
         return res.status(400).json({ message: "Please provide shop ID" });
       }
 
-      const { branchId, days = 7 } = req.query;
+      const { branchId, days = 7, startDate, endDate } = req.query;
 
       // Get shop info
       const shop = await Shop.findById(shopId);
@@ -65,6 +65,8 @@ const predictiveController = {
               shop_id: order.shop_id.toString(),
               branch_id: order.branch_id.toString(),
             })),
+            start_date: startDate, // Add this
+            end_date: endDate,
           },
           {
             timeout: 30000, // 30 second timeout
