@@ -32,7 +32,7 @@ try {
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb://127.0.0.1:27017/nimbus360fyp")
+  .connect("mongodb+srv://sohaibsipra869:f2NZIOoVGlnIkGCz@cluster0nimbus.pepam7x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0nimbus")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
