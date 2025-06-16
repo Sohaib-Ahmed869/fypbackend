@@ -39,7 +39,7 @@ mongoose
 app.use(express.json({ limit: "50mb" }));
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://nimbus360.org"],
+    origin: ["http://localhost:3000", "http://nimbusbucket360.s3-website.eu-north-1.amazonaws.com"],
     credentials: true,
   })
 );
